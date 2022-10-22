@@ -9,6 +9,7 @@ __pycache__/
 # Virtuelle miljøer
 .venv
 
+# model
 gustav_chris_model.h5
 
 # Distribution / packaging

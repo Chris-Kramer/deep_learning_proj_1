@@ -94,29 +94,18 @@ ARCHITECTURE:
     FLATTEN -> DENSE -> SIGMOID
 """
 model = models.Sequential()
+# CONV -> CONV -> POOL -->
+model.add(layers.Conv2D(filters = 6,
+                        kernel_size = (2, 2),
+                        strides = (1, 1),
+                        input_shape = input_shape))
+model.add(layers.MaxPooling2D(pool_size = (2, 2), strides=(2,2)))
 
 # CONV -> CONV -> POOL -->
 model.add(layers.Conv2D(filters = 16,
-                        kernel_size = (3, 3),
-                        strides = (1, 1),
-                        input_shape = input_shape))
-model.add(layers.Conv2D(filters = 16,
-                        kernel_size = (3, 3),
+                        kernel_size = (2, 2),
                         activation = "relu",
                         strides = (1, 1)))
-model.add(layers.MaxPooling2D(pool_size = (2, 2), strides=(2,2)))
-
-# CONV -> CONV -> Pool -->
-model.add(layers.Conv2D(filters = 32,
-                        kernel_size = (3, 3),
-                        activation = "relu",
-                        strides = (1,1)
-                        ))
-model.add(layers.Conv2D(filters = 32,
-                        kernel_size = (3, 3),
-                        activation = "relu",
-                        strides = (1,1)
-                        ))
 model.add(layers.MaxPooling2D(pool_size = (2, 2), strides=(2,2)))
 
 # CONV -> CONV -> POOL -->
@@ -136,9 +125,9 @@ model.add(layers.Flatten())
 model.add(layers.Dense(512,
                        kernel_regularizer = l2_regu,
                        activation='relu'))
+                    
 layers.Dropout(.5)
 model.add(layers.Dense(1, activation='sigmoid'))
-
 # Compile model
 model.compile(loss = 'binary_crossentropy',
                       optimizer = optimizers.Adam(learning_rate = 0.0001),
@@ -168,6 +157,27 @@ history = model.fit(
     verbose = True,
 )
 model.evaluate(test_generator, steps=calc_steps_epoch("catdog_data/test", batch_size, 1))
+
+acc = history.history['accuracy']
+val_acc = history.history['val_accuracy']
+loss = history.history['loss']
+val_loss = history.history['val_loss']
+
+epochs = range(1, len(acc) + 1)
+
+plt.plot(epochs, acc, 'b', label='Training accuracy')
+plt.plot(epochs, val_acc, 'r', label='Validation accuracy')
+plt.title('Training and validation accuracy')
+plt.legend()
+
+plt.figure()
+
+plt.plot(epochs, loss, 'b', label='Training loss')
+plt.plot(epochs, val_loss, 'r', label='Validation loss')
+plt.title('Training and validation loss')
+plt.legend()
+
+plt.show()
 """
 
 
@@ -179,5 +189,5 @@ history = model.fit(
     verbose = True
 )
 
-model.evaluate(test_generator, steps=calc_steps_epoch("catdog_data/test", batch_size, 1)) # ACC: 68,75 %
+model.evaluate(test_generator, steps=calc_steps_epoch("catdog_data/test", batch_size, 1)) # ACC: 75,00 %
 model.save("models/gustav_chris_model.h5")
