@@ -155,5 +155,5 @@ def plot_history(H, epochs, output = "performance.png"):
     plt.show()
     fig.savefig(output)
 
-plot_history(history, y)
+plot_history(history, len(list(epochs)))
 """

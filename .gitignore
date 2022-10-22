@@ -9,6 +9,8 @@ __pycache__/
 # Virtuelle miljøer
 .venv
 
+gustav_chris_model.h5
+
 # Distribution / packaging
 .Python
 build/
