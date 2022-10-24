@@ -1,13 +1,8 @@
-#!/usr/bin/python3
-###########
-# Imports #
-###########
-# Model
 import tensorflow as tf
 from tensorflow.keras import layers
 from tensorflow.keras import models
 from tensorflow.keras import optimizers
-
+from tensorflow.keras.regularizers import l2
 # Data wrangling and preprocessing
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import pandas as pd
@@ -18,9 +13,7 @@ import matplotlib.pyplot as plt
 
 from os import listdir
 from math import ceil
-import warnings
 
-warnings.filterwarnings("ignore")
 
 ##############################
 # Part one - Data generators #
@@ -31,14 +24,14 @@ def generate_data(targ_size: tuple[int, int], batch_size: int) -> ImageDataGener
     """
     # ------ Training data ------
     train_datagen = ImageDataGenerator(
-        rescale=1./255, # Scale between 0 and 1
-        rotation_range=40, # Random rotations of 40 degree 
-        width_shift_range=0.2, # Randomly Shift pixels between 0% and 20% in width
-        height_shift_range=0.2, # Randomly shift pixels between 0% and 20% in height
-        shear_range=0.2, # Shear angle in counter-clockwise direction in degrees
-        zoom_range=0.2, # Zoom in between 0 and 20 %
-        horizontal_flip=True,
-        vertical_flip = True)
+        rescale=1./255,) # Scale between 0 and 1
+        #rotation_range=40, # Random rotations of 40 degree 
+        #width_shift_range=0.2, # Randomly Shift pixels between 0% and 20% in width
+        #height_shift_range=0.2, # Randomly shift pixels between 0% and 20% in height
+        #shear_range=0.2, # Shear angle in counter-clockwise direction in degrees
+        #zoom_range=0.2, # Zoom in between 0 and 20 %
+        #horizontal_flip=True,
+        #vertical_flip = True)
 
     train_generator = train_datagen.flow_from_directory(
         directory = r"catdog_data/train",
@@ -78,62 +71,106 @@ def generate_data(targ_size: tuple[int, int], batch_size: int) -> ImageDataGener
 
     return train_generator, val_generator, test_generator, full_train_generator
 
-input_shape = (224, 224, 3)
+input_shape = (227, 227, 3)
 batch_size = 32
 train_generator, val_generator, test_generator, full_train_generator = generate_data(targ_size = (input_shape[0], input_shape[1]), batch_size = batch_size)
 
-####################
-# Part two - Model # 
-####################
-"""
-ARCHITECTURE:
-    CONV -> CONV -> POOL -->
-    CONV -> CONV -> POOL -->
-    CONV -> CONV -> POOL -->
-    FLATTEN -> DENSE -> SIGMOID
-"""
+
 model = models.Sequential()
-# CONV -> CONV -> POOL -->
-model.add(layers.Conv2D(filters = 6,
-                        kernel_size = (2, 2),
-                        strides = (1, 1),
+# Conv 1
+model.add(layers.Conv2D(filters = 96,
+                        kernel_size = (11, 11),
+                        strides = 4,
+                        activation = 'relu',
                         input_shape = input_shape))
-model.add(layers.MaxPooling2D(pool_size = (2, 2), strides=(2,2)))
+# Max pool 1
+model.add(layers.MaxPooling2D(pool_size = 3, strides = 2))
 
-# CONV -> CONV -> POOL -->
-model.add(layers.Conv2D(filters = 16,
-                        kernel_size = (2, 2),
-                        activation = "relu",
-                        strides = (1, 1)))
-model.add(layers.MaxPooling2D(pool_size = (2, 2), strides=(2,2)))
+# COnv 2
+model.add(layers.Conv2D(filters = 256,
+                        kernel_size = (5, 5),
+                        strides = 1,
+                        padding = "same",
+                        activation = 'relu'))
+# Max pool 2
+model.add(layers.MaxPooling2D(pool_size =(3, 3), strides = 1))
 
-# CONV -> CONV -> POOL -->
-model.add(layers.Conv2D(filters = 64,
+# Conv 3
+model.add(layers.Conv2D(filters = 384,
                         kernel_size = (3, 3),
-                        activation = "relu",
-                        strides = (1, 1)))
-model.add(layers.Conv2D(filters = 64,
-                        kernel_size = (3, 3),
-                        activation = "relu",
-                        strides = (1, 1)))
-model.add(layers.MaxPooling2D(pool_size = (2, 2), strides=(2,2)))
+                        strides = 1,
+                        padding = "same",
+                        activation = 'relu'))
 
-# FLATTEN -> DENSE -> SIGMOID
+# Conv 4
+model.add(layers.Conv2D(filters = 384,
+                        kernel_size = (3, 3),
+                        strides = 1,
+                        padding = "same",
+                        activation = 'relu'))
+
+# Conv 5 
+model.add(layers.Conv2D(filters = 256,
+                        kernel_size = (3, 3),
+                        strides = 1,
+                        padding = "same",
+                        activation = 'relu'))
+# Max pool 5
+model.add(layers.MaxPooling2D(pool_size = (3, 3)))
+
+layers.Dropout(.5)
 l2_regu = l2(0.0005)
 model.add(layers.Flatten())
-model.add(layers.Dense(512,
-                       kernel_regularizer = l2_regu,
+model.add(layers.Dense(4096,
+                       #kernel_regularizer = l2_regu,
                        activation='relu'))
-                    
 layers.Dropout(.5)
+model.add(layers.Dense(4096,
+                       #kernel_regularizer = l2_regu,
+                       activation='relu'))
+
 model.add(layers.Dense(1, activation='sigmoid'))
 # Compile model
 model.compile(loss = 'binary_crossentropy',
                       optimizer = optimizers.Adam(learning_rate = 0.0001),
                       metrics = ['accuracy'])
-model.summary()
 
-# ------ Training the model ------
+"""
+model.add(layers.Conv2D(8,(7,7), activation = 'relu', input_shape = input_shape))
+model.add(layers.Conv2D(8,(7,7), activation = 'relu'))
+model.add(layers.MaxPooling2D(pool_size = (2,2)))
+
+model.add(layers.Conv2D(16,(7,7), activation = 'relu'))
+model.add(layers.Conv2D(16,(7,7), activation = 'relu'))
+model.add(layers.MaxPooling2D(pool_size = (2,2)))
+
+# Adds a densely-connected layer with 64 units to the model:
+model.add(layers.Conv2D(32,(5,5), activation = 'relu'))
+model.add(layers.Conv2D(32,(5,5), activation = 'relu'))
+model.add(layers.MaxPooling2D(pool_size = (2,2)))
+
+model.add(layers.Conv2D(64,(3,3), activation = 'relu'))
+model.add(layers.Conv2D(64,(3,3), activation = 'relu'))
+model.add(layers.MaxPooling2D(pool_size = (2,2)))
+
+model.add(layers.Conv2D(128,(2,2), activation = 'relu'))
+model.add(layers.Conv2D(128,(2,2), activation = 'relu'))
+model.add(layers.MaxPooling2D(pool_size = (2,2)))
+
+l2_regu = l2(0.0005)
+model.add(layers.Flatten())
+model.add(layers.Dense(512,
+                       #kernel_regularizer = l2_regu,
+                       activation='relu'))
+                    
+#layers.Dropout(.5)
+model.add(layers.Dense(1, activation='sigmoid'))
+# Compile model
+model.compile(loss = 'binary_crossentropy',
+                      optimizer = optimizers.Adam(learning_rate = 0.0001),
+                      metrics = ['accuracy'])
+
+"""
 def calc_steps_epoch(path_to_datadir: str = "catdog_data/train",
                      batch_size: int = 32,
                      factor: int | float = 1) -> int:
@@ -145,17 +182,18 @@ def calc_steps_epoch(path_to_datadir: str = "catdog_data/train",
     """
     return int(ceil( (factor * len(listdir(path_to_datadir)))/ batch_size)) 
 
-"""
-# Validation
 history = model.fit(
     train_generator,
-    steps_per_epoch =  calc_steps_epoch("catdog_data/train", batch_size, 1), # 
-    epochs = 200,
+    steps_per_epoch =  calc_steps_epoch("catdog_data/train", batch_size), # How ma
+    batch_size=batch_size,
+    epochs = 100,
     validation_data = val_generator,
-    validation_steps = calc_steps_epoch("catdog_data/validation", batch_size, 1),
-    verbose = True,
+    validation_steps = calc_steps_epoch("catdog_data/validation", batch_size),
+    verbose = True
 )
+
 model.evaluate(test_generator, steps=calc_steps_epoch("catdog_data/test", batch_size, 1))
+
 
 acc = history.history['accuracy']
 val_acc = history.history['val_accuracy']
@@ -177,16 +215,3 @@ plt.title('Training and validation loss')
 plt.legend()
 
 plt.show()
-"""
-
-
-# FINAL MODEL
-history = model.fit(
-    full_train_generator,
-    steps_per_epoch =  calc_steps_epoch("catdog_data/train_val", batch_size, 1), # 
-    epochs = 200,
-    verbose = True
-)
-
-model.evaluate(test_generator, steps=calc_steps_epoch("catdog_data/test", batch_size, 1)) # ACC: 75,00 %
-model.save("models/gustav_chris_model.h5")
