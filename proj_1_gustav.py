@@ -1,6 +1,7 @@
-import keras
 import tensorflow as tf
+import numpy as np
 from matplotlib import pyplot as plt
+import matplotlib.image as mpimg
 
 ###############
 # Load Model #
@@ -8,20 +9,20 @@ from matplotlib import pyplot as plt
 model_reloaded = tf.keras.models.load_model('models/gustav_chris_model.h5')
 model_reloaded.summary()
 
-
-
 #################
 # Visualization #
 #################
 
+# ------ Display Example Image ------
+fig, ax = plt.subplots(2, 2, sharex=False, sharey=False, figsize=(6,6)) # create a grid of 2x2 images
+
+for i in range(2):
+    for j in range(2):
+        ax[i][j].imshow(mpimg.imread('catdog_data/train/cats/cat.' + str(i*3+j) + '.jpg'))
+
+plt.show() # # display plot
+
 # ------ Data Augmentation ------
-plt.figure(figsize=(10, 10))
-for images, _ in train_dataset.take(1):
-    for i in range(9):
-        augmented_images = data_augmentation(images)
-        ax = plt.subplot(3, 3, i + 1)
-        plt.imshow(augmented_images[0].numpy().astype("uint8"))
-        plt.axis("off")
 
 
 # ------ Filters ------
