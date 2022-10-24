@@ -6,7 +6,7 @@ model_reloaded = tf.keras.models.load_model('models/gustav_chris_model.h5')
 model_reloaded.summary()
 
 #################
-# Visualization # 
+# Visualization ## 
 #################
 
 # ------ Data Augmentation ------
