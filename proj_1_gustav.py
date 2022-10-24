@@ -1,7 +1,9 @@
-import tensorflow as tf
 import numpy as np
-from matplotlib import pyplot as plt
+from os import listdir
+import tensorflow as tf
 import matplotlib.image as mpimg
+from matplotlib import pyplot as plt
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 ###############
 # Load Model #
@@ -22,8 +24,7 @@ for i in range(2):
 
 plt.show() # # display plot
 
-# ------ Data Augmentation ------
-
+# ------ Data Augmentation Example ------
 
 # ------ Filters ------
 
