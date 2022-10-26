@@ -41,7 +41,15 @@ model.add(layers.Conv2D(filters = 64,
                         activation = 'relu'))
 model.add(layers.MaxPooling2D(pool_size = 2))
 
-model.add(layers.Conv2D(filters = 64,
+model.add(layers.Conv2D(filters = 128,
+                        kernel_size = (3, 3),
+                        kernel_regularizer = regu.l2(0.0001),
+                        #bias_regularizer = regu.l2(0.0001),
+                        #activity_regularizer = regu.l2(0.0001),
+                        activation = 'relu'))
+model.add(layers.MaxPooling2D(pool_size = 2))
+
+model.add(layers.Conv2D(filters = 256,
                         kernel_size = (3, 3),
                         kernel_regularizer = regu.l2(0.0001),
                         #bias_regularizer = regu.l2(0.0001),
@@ -56,13 +64,16 @@ model.add(layers.Dense(248,
                         #activity_regularizer = regu.l2(0.0001),
                        activation='relu'))
 
-layers.Dropout(.2)
+layers.Dropout(0.5)
 
 model.add(layers.Dense(1, activation='sigmoid'))
 
 model.compile(loss = 'binary_crossentropy',
                       optimizer = optimizers.Adam(learning_rate = 0.001),
                       metrics = ['accuracy'])
+
+model.summary()
+
 """
 model = models.Sequential()
 
@@ -133,7 +144,7 @@ history = model.fit(
     train_generator,
     #steps_per_epoch =  calc_steps_epoch("catdog_data/train", batch_size), # How ma
     batch_size=batch_size,
-    epochs = 100,
+    epochs = 50,
     validation_data = val_generator,
     #validation_steps = calc_steps_epoch("catdog_data/validation", batch_size),
     verbose = True#,
@@ -142,5 +153,75 @@ history = model.fit(
 
 model.evaluate(test_generator, steps=calc_steps_epoch("catdog_data/test", batch_size, 1))
 
-
 plot_hist(history)
+
+#################
+# Visualization #
+#################
+
+# ------ Filters ------
+for layer in model.layers:
+    if 'conv' not in layer.name:
+        continue    
+    filters , bias = layer.get_weights()
+    print(layer.name , filters.shape)
+
+filters , bias = model.layers[2].get_weights() # retrieve weights from the third hidden layer
+
+f_min, f_max = filters.min(), filters.max() # normalize filter values to 0-1 so we can visualize them
+filters = (filters - f_min) / (f_max - f_min)
+
+import matplotlib.pyplot as plt
+
+n_filters = 6
+ix = 1
+fig = plt.figure(figsize=(8,8))
+for i in range(n_filters):
+    # get the filters
+    f = filters[:,:,:,i]
+    for j in range(3):
+        # subplot for 6 filters and 3 channels
+        plt.subplot(n_filters,3,ix)
+        plt.imshow(f[:,:,j] ,cmap='gray')
+        ix+=1
+
+# plot the filters 
+plt.show()
+
+# ------ Feature Maps ------
+for i in range(len(model.layers)):
+    layer = model.layers[i]
+    if 'conv' not in layer.name:
+        continue    
+    print(i , layer.name , layer.output.shape)
+
+from tensorflow.keras.models import Model
+
+model = Model(inputs=model.inputs , outputs=model.layers[5].output)
+
+from tensorflow.keras.preprocessing.image import load_img
+
+image = load_img("catdog_data/train/cats/cat.1.jpg" , target_size=(150,150))
+
+# convert the image to an array
+from tensorflow.keras.preprocessing.image import img_to_array
+image = img_to_array(image)
+
+# expand dimensions so that it represents a single 'sample'
+from numpy import expand_dims
+image = expand_dims(image, axis=0)
+
+# X
+from tensorflow.keras.applications.vgg16 import preprocess_input
+image = preprocess_input(image)
+
+#calculating features_map
+features = model.predict(image)
+
+fig = plt.figure(figsize=(8,8))
+for i in range(1,features.shape[3]+1):
+
+    plt.subplot(8,8,i)
+    plt.imshow(features[0,:,:,i-1] , cmap='gray')
+    
+plt.show()
