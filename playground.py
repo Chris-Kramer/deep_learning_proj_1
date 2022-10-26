@@ -74,6 +74,6 @@ def calc_steps_epoch(path_to_datadir: str = "catdog_data/train",
     But we can raise the factor so we might end up going through more than the lenght of the directory (if there is little data)
     """
     return int(ceil( (factor * len(listdir(path_to_datadir)))/ batch_size)) 
-model = tf.keras.models.load_model("models/gustav_chris_model.h5")
+model = tf.keras.models.load_model("models/alexNet.h5")
 
 model.evaluate(val_generator, steps=calc_steps_epoch("catdog_data/train", batch_size, 1))

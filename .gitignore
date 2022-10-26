@@ -11,6 +11,7 @@ __pycache__/
 
 # model
 gustav_chris_model.h5
+alexNet.h5
 
 # Distribution / packaging
 .Python
