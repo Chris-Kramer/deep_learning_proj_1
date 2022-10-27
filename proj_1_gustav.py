@@ -11,6 +11,45 @@ from utils import plot_hist
 from os import listdir
 from math import ceil
 
+######################
+# Image Augmentation #
+######################
+import os
+import numpy as np
+import tensorflow as tf
+import matplotlib.pyplot as plt
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+
+# ImageDataGenerator rotation
+datagen = ImageDataGenerator(
+    rotation_range  = 40,
+    fill_mode       = 'nearest',
+    shear_range     = 0.2,
+    zoom_range      = 0.2,
+    horizontal_flip = True
+    )
+
+fnames = [os.path.join("catdog_data/train/cats/", fname) for
+     fname in os.listdir("catdog_data/train/cats/")]
+
+img_path = fnames[3]
+
+img = tf.keras.utils.load_img(img_path, target_size=(150, 150))
+
+x = tf.keras.utils.img_to_array(img)
+x = x.reshape((1,) + x.shape)
+
+i = 0
+for batch in datagen.flow(x, batch_size=1):
+    #plt.figure(i)
+    ax = plt.subplot(2, 2, i + 1)
+    imgplot = plt.imshow(tf.keras.utils.img_to_array(batch[0]).astype(np.uint8))
+    i += 1
+    if i % 4 == 0:
+        break
+
+plt.show()
+
 ##############################
 # Part one - Data generators #
 ##############################
